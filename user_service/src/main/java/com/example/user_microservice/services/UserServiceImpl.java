@@ -1,6 +1,5 @@
-package com.example.user_microservice.Impl;
+package com.example.user_microservice.services;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,21 +13,23 @@ import com.example.user_microservice.entities.Hotel;
 import com.example.user_microservice.entities.Rating;
 import com.example.user_microservice.entities.User;
 import com.example.user_microservice.exceptions.ResourceNotFoundException;
+import com.example.user_microservice.external.services.HotelService;
 import com.example.user_microservice.repositories.UserRepository;
-import com.example.user_microservice.services.UserService;
 
 @Service
 public class UserServiceImpl implements UserService {
 
     private UserRepository userRepository;
     private RestTemplate restTemplate;
+    private HotelService hotelService;
 
     private Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, RestTemplate restTemplate) {
+    public UserServiceImpl(UserRepository userRepository, RestTemplate restTemplate, HotelService hotelService) {
         this.userRepository = userRepository;
         this.restTemplate = restTemplate;
+        this.hotelService = hotelService;
     }
 
     @Override
@@ -65,7 +66,7 @@ public class UserServiceImpl implements UserService {
 
     private void fetchAndSetTheUserRatingsWithHotel(String id, User theUser) {
         // Call ratings microservice to get ratings for user
-        Rating[] theUserRatingsArr = restTemplate.getForObject("http://localhost:8083/ratings/users/" + id,
+        Rating[] theUserRatingsArr = restTemplate.getForObject("http://RATING-MICROSERVICE/ratings/users/" + id,
                 Rating[].class);
 
         // Convert ratings array to list
@@ -77,8 +78,13 @@ public class UserServiceImpl implements UserService {
         // Enrich each rating with hotel data
         for (Rating rating : theUserRatingsArr) {
 
-            // Call hotel microservice to get hotel for rating
-            Hotel hotel = restTemplate.getForObject("http://localhost:8082/hotels/" + rating.getHotelId(), Hotel.class);
+            // Call hotel microservice to get hotel for rating via rest template - 1st way
+            // Hotel hotel = restTemplate.getForObject("http://HOTEL-MICROSERVICE/hotels/" +
+            // rating.getHotelId(),
+            // Hotel.class);
+
+            // Call hotel microservice to get hotel for rating via feign client - 2nd way
+            Hotel hotel = hotelService.getHotelById(rating.getHotelId());
 
             // Set hotel on rating
             rating.setHotel(hotel);
