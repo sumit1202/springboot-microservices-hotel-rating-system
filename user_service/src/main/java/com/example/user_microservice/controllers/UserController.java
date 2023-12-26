@@ -2,6 +2,7 @@ package com.example.user_microservice.controllers;
 
 import java.util.List;
 
+import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,11 +16,14 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.user_microservice.entities.User;
 import com.example.user_microservice.services.UserService;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
     private UserService userService;
+    private Logger logger = org.slf4j.LoggerFactory.getLogger(UserController.class);
 
     @Autowired
     public UserController(UserService userService) {
@@ -33,15 +37,43 @@ public class UserController {
     }
 
     @GetMapping
+    @CircuitBreaker(name = "ratingHotelBreaker2", fallbackMethod = "ratingHotelFallback2")
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = userService.getAllUsers();
         return new ResponseEntity<List<User>>(users, HttpStatus.OK);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable String id) {
-        User user = userService.getUser(id);
+    @GetMapping("/{userId}")
+    @CircuitBreaker(name = "ratingHotelBreaker", fallbackMethod = "ratingHotelFallback")
+    public ResponseEntity<User> getUser(@PathVariable String userId) {
+        User user = userService.getUser(userId);
         return new ResponseEntity<User>(user, HttpStatus.OK);
+    }
+
+    // fallback method for ratingHotelBreaker circuit breaker
+    public ResponseEntity<User> ratingHotelFallback(String userId, Exception exception) {
+        logger.info("\n=> ratingHotelFallback called with exception as: " + exception.getMessage());
+        User user = User.builder()
+                .firstName("NA")
+                .lastName("NA")
+                .email("NA")
+                .id("NA")
+                .build();
+        return new ResponseEntity<User>(user, HttpStatus.OK);
+    }
+
+    // fallback method for ratingHotelBreaker2 circuit breaker
+    public ResponseEntity<List<User>> ratingHotelFallback2(Exception exception) {
+        logger.info("\\n" + //
+                "\n=> ratingHotelFallback2 called with exception as: " + exception.getMessage());
+        List<User> users = List.of(
+                User.builder()
+                        .firstName("NA")
+                        .lastName("NA")
+                        .email("NA")
+                        .id("NA")
+                        .build());
+        return new ResponseEntity<List<User>>(users, HttpStatus.OK);
     }
 
 }
