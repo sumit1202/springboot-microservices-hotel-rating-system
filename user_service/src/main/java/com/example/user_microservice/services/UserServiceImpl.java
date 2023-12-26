@@ -73,7 +73,7 @@ public class UserServiceImpl implements UserService {
         List<Rating> theUserRatingsList = List.of(theUserRatingsArr);
 
         // Log ratings
-        logger.info("\n=> theUserRatings: " + theUserRatingsArr);
+        logger.info("\n=> theUserRatings: " + theUserRatingsArr.toString());
 
         // Enrich each rating with hotel data
         for (Rating rating : theUserRatingsArr) {

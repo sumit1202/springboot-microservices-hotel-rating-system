@@ -17,6 +17,7 @@ import com.example.user_microservice.entities.User;
 import com.example.user_microservice.services.UserService;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 
 @RestController
 @RequestMapping("/users")
@@ -24,6 +25,7 @@ public class UserController {
 
     private UserService userService;
     private Logger logger = org.slf4j.LoggerFactory.getLogger(UserController.class);
+    int retryCount = 1;
 
     @Autowired
     public UserController(UserService userService) {
@@ -38,16 +40,21 @@ public class UserController {
 
     @GetMapping
     @CircuitBreaker(name = "ratingHotelBreaker2", fallbackMethod = "ratingHotelFallback2")
+    @Retry(name = "ratingHotelRetry2", fallbackMethod = "ratingHotelFallback2")
     public ResponseEntity<List<User>> getAllUsers() {
+        logger.info("\n=> retryCount: " + (retryCount++));
         List<User> users = userService.getAllUsers();
-        return new ResponseEntity<List<User>>(users, HttpStatus.OK);
+        // return new ResponseEntity<List<User>>(users, HttpStatus.OK);
+        return ResponseEntity.ok(users);
     }
 
     @GetMapping("/{userId}")
     @CircuitBreaker(name = "ratingHotelBreaker", fallbackMethod = "ratingHotelFallback")
+    @Retry(name = "ratingHotelRetry", fallbackMethod = "ratingHotelFallback")
     public ResponseEntity<User> getUser(@PathVariable String userId) {
         User user = userService.getUser(userId);
-        return new ResponseEntity<User>(user, HttpStatus.OK);
+        // return new ResponseEntity<User>(user, HttpStatus.OK);
+        return ResponseEntity.ok(user);
     }
 
     // fallback method for ratingHotelBreaker circuit breaker
