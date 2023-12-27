@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,16 +34,19 @@ public class RatingController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAuthority('SCOPE_internal')")
     public ResponseEntity<List<Rating>> getAllRatings() {
         return ResponseEntity.status(HttpStatus.OK).body(ratingService.getAllRatings());
     }
 
     @GetMapping("/users/{userId}")
+    @PreAuthorize("hasAuthority('SCOPE_internal')")
     public ResponseEntity<List<Rating>> getAllRatingsByUserId(@PathVariable String userId) {
         return ResponseEntity.status(HttpStatus.OK).body(ratingService.getAllRatingsByUserId(userId));
     }
 
     @GetMapping("/hotels/{hotelId}")
+    @PreAuthorize("hasAuthority('SCOPE_internal')")
     public ResponseEntity<List<Rating>> getAllRatingsByHotelId(@PathVariable String hotelId) {
         return ResponseEntity.status(HttpStatus.OK).body(ratingService.getAllRatingsByHotelId(hotelId));
     }
